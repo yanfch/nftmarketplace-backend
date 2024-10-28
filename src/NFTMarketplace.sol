@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract NFTMarketplace is ERC721URIStorage {
-    
     uint256 private _tokenIds;
     uint256 private _itemsSold;
 
@@ -151,7 +150,6 @@ contract NFTMarketplace is ERC721URIStorage {
                 currentIndex += 1;
             }
         }
-
 
         return items;
     }
