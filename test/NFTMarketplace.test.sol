@@ -28,7 +28,7 @@ contract NFTMarketplaceTest is Test {
         uint256 _listingPrice = 0.002 ether;
         market.updateListingPrice(_listingPrice);
         uint256 price = market.getListingPrice();
-        assertEq(price, listingPrice);
+        assertEq(price, _listingPrice);
     }
 
     function test_updateListingPriceShouldFailWithOnlyOwnerError() public {
