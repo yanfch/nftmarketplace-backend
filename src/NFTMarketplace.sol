@@ -56,24 +56,9 @@ contract NFTMarketplace is ERC721URIStorage {
         _mint(msg.sender, newTokenId);
         _setTokenURI(newTokenId, tokenURI);
 
-        createItem(newTokenId, price);
+        _createItem(newTokenId, price);
 
         return newTokenId;
-    }
-
-    function createItem(uint256 tokenId, uint256 price) private {
-        if (price == 0) {
-            revert CreateItemPriceZeroError();
-        }
-        if (msg.value != listingPrice) {
-            revert CreateItemPriceZeroError();
-        }
-
-        idItem[tokenId] = Item(tokenId, payable(msg.sender), payable(address(this)), price, false);
-
-        _transfer(msg.sender, address(this), tokenId);
-
-        emit ItemCreated(tokenId, msg.sender, address(this), price, false);
     }
 
     function resaleItem(uint256 tokenId, uint256 price) public payable {
@@ -95,11 +80,10 @@ contract NFTMarketplace is ERC721URIStorage {
 
     function saleItem(uint256 tokenId) public payable {
         uint256 price = idItem[tokenId].price;
-        if (msg.value == price) {
+        if (msg.value != price) {
             revert SaleItemError();
         }
 
-        // ???
         idItem[tokenId].owner = payable(msg.sender);
         idItem[tokenId].sold = true;
         idItem[tokenId].owner = payable(address(0));
@@ -109,7 +93,7 @@ contract NFTMarketplace is ERC721URIStorage {
         _transfer(address(this), msg.sender, tokenId);
 
         payable(owner).transfer(listingPrice);
-        payable(idItem[tokenId].seller).transfer(msg.value);
+        payable(idItem[tokenId].seller).transfer(msg.value - listingPrice);
     }
 
     function fetchItem() public view returns (Item[] memory) {
@@ -176,5 +160,20 @@ contract NFTMarketplace is ERC721URIStorage {
         }
 
         return items;
+    }
+
+    function _createItem(uint256 tokenId, uint256 price) private {
+        if (price == 0) {
+            revert CreateItemPriceZeroError();
+        }
+        if (msg.value < listingPrice) {
+            revert CreateItemPriceZeroError();
+        }
+
+        idItem[tokenId] = Item(tokenId, payable(msg.sender), payable(address(this)), price, false);
+
+        _transfer(msg.sender, address(this), tokenId);
+
+        emit ItemCreated(tokenId, msg.sender, address(this), price, false);
     }
 }
