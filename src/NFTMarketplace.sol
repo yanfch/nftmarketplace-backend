@@ -61,12 +61,29 @@ contract NFTMarketplace is ERC721URIStorage {
         return newTokenId;
     }
 
-    function resaleItem(uint256 tokenId, uint256 price) public payable {
+    function saleItem(uint256 tokenId) public payable {
+        uint256 price = idItem[tokenId].price;
+        if (msg.value != price) {
+            revert SaleItemError();
+        }
+
+        idItem[tokenId].owner = payable(msg.sender);
+        idItem[tokenId].sold = true;
+
+        _itemsSold++;
+
+        _transfer(address(this), msg.sender, tokenId);
+
+        payable(owner).transfer(listingPrice);
+        payable(idItem[tokenId].seller).transfer(msg.value);
+    }
+
+    function reSallItem(uint256 tokenId, uint256 price) public payable {
         if (idItem[tokenId].owner != msg.sender) {
             revert OnlyOwnerError();
         }
         if (msg.value != listingPrice) {
-            revert ResaleItemError();
+            revert SaleItemError();
         }
         idItem[tokenId].sold = false;
         idItem[tokenId].price = price;
@@ -76,24 +93,6 @@ contract NFTMarketplace is ERC721URIStorage {
         _itemsSold--;
 
         _transfer(msg.sender, address(this), tokenId);
-    }
-
-    function saleItem(uint256 tokenId) public payable {
-        uint256 price = idItem[tokenId].price;
-        if (msg.value != price) {
-            revert SaleItemError();
-        }
-
-        idItem[tokenId].owner = payable(msg.sender);
-        idItem[tokenId].sold = true;
-        idItem[tokenId].owner = payable(address(0));
-
-        _itemsSold++;
-
-        _transfer(address(this), msg.sender, tokenId);
-
-        payable(owner).transfer(listingPrice);
-        payable(idItem[tokenId].seller).transfer(msg.value - listingPrice);
     }
 
     function fetchItem() public view returns (Item[] memory) {
@@ -166,7 +165,7 @@ contract NFTMarketplace is ERC721URIStorage {
         if (price == 0) {
             revert CreateItemPriceZeroError();
         }
-        if (msg.value < listingPrice) {
+        if (msg.value != listingPrice) {
             revert CreateItemPriceZeroError();
         }
 
@@ -175,5 +174,10 @@ contract NFTMarketplace is ERC721URIStorage {
         _transfer(msg.sender, address(this), tokenId);
 
         emit ItemCreated(tokenId, msg.sender, address(this), price, false);
+    }
+
+    function getItem(uint256 tokenId) public view returns (uint256, address, address, uint256, bool) {
+        Item memory item = idItem[tokenId];
+        return (item.tokenId, item.seller, item.owner, item.price, item.sold);
     }
 }

@@ -47,36 +47,54 @@ contract NFTMarketplaceTest is Test {
         vm.expectEmit(true, true, true, true);
         emit ItemCreated(1, address(seller), address(market), price, false);
 
-        uint256 tokenId = _craeteToken(price);
+        uint256 tokenId = market.createToken{value: listingPrice}("test uri", 0.01 ether);
         assertTrue(tokenId > 0);
     }
 
     function test_saleItem() public {
         vm.prank(seller);
         uint256 salePrice = 0.01 ether;
-        uint256 tokenId = _craeteToken(salePrice);
+
+        uint256 tokenId = market.createToken{value: listingPrice}("test uri", salePrice);
 
         vm.prank(buyer);
         uint256 purchasePrice = 0.01 ether;
         market.saleItem{value: purchasePrice}(tokenId);
 
         address _owner = market.ownerOf(tokenId);
-        assertEq(buyer, _owner);
+        assertEq(_owner, buyer);
 
         uint256 buyerBalance = buyer.balance;
         console.log("buyer banlance: ", buyerBalance);
-        assertEq(990000000000000000, buyerBalance);
+        assertEq(0.99 ether, buyerBalance);
 
         uint256 sellerBalance = seller.balance;
         console.log("saller banlance: ", sellerBalance);
-        assertEq(998500000000000000, sellerBalance);
+        assertEq(1.0085 ether, sellerBalance);
 
         uint256 ownerBalance = owner.balance;
         console.log("owner banlance: ", ownerBalance);
-        assertEq(1500000000000000, ownerBalance);
+        assertEq(0.0015 ether, ownerBalance);
     }
 
-    function _craeteToken(uint256 price) internal returns (uint256 tokenId) {
-        return market.createToken{value: price}("test uri", price);
+    function test_resallItem() public {
+        vm.prank(seller);
+        uint256 salePrice = 0.01 ether;
+        uint256 tokenId = market.createToken{value: listingPrice}("test uri", salePrice);
+
+        vm.prank(buyer);
+        uint256 purchasePrice = salePrice;
+        market.saleItem{value: purchasePrice}(tokenId);
+        assertEq(0.99 ether, buyer.balance);
+
+        vm.prank(buyer);
+        uint256 reSallPrice = 0.02 ether;
+        market.reSallItem{value: listingPrice}(tokenId, reSallPrice);
+        assertEq(0.9885 ether, buyer.balance);
+
+        // 1 on sale
+        assertEq(0.0015 ether, address(market).balance);
+        // 1 sold
+        assertEq(0.0015 ether, owner.balance);
     }
 }
