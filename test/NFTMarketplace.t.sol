@@ -97,4 +97,40 @@ contract NFTMarketplaceTest is Test {
         // 1 sold
         assertEq(0.0015 ether, owner.balance);
     }
+
+    function test_fetchMarketItem() public {
+        vm.startPrank(seller);
+        uint256 salePrice = 0.01 ether;
+        market.createToken{value: listingPrice}("test uri one", salePrice);
+        market.createToken{value: listingPrice}("test uri two", salePrice);
+        assertEq(2, market.fetchMarketItem().length);
+        vm.stopPrank();
+    }
+
+    function test_fetchMyNFT() public {
+        vm.startPrank(seller);
+        uint256 salePrice = 0.01 ether;
+        uint256 tokenOneId = market.createToken{value: listingPrice}("test uri one", salePrice);
+        market.createToken{value: listingPrice}("test uri two", salePrice);
+        vm.stopPrank();
+
+        vm.prank(address(market));
+        assertEq(2, market.fetchMyNFT().length);
+
+        vm.startPrank(buyer);
+        uint256 purchasePrice = salePrice;
+        market.saleItem{value: purchasePrice}(tokenOneId);
+        assertEq(0.99 ether, buyer.balance);
+        assertEq(1, market.fetchMyNFT().length);
+        vm.stopPrank();
+    }
+
+    function test_fetchItemsListed() public {
+        uint256 salePrice = 0.01 ether;
+        vm.startPrank(seller);
+        market.createToken{value: listingPrice}("test uri one", salePrice);
+        market.createToken{value: listingPrice}("test uri two", salePrice);
+        assertEq(2, market.fetchItemsListed().length);
+        vm.stopPrank();
+    }
 }

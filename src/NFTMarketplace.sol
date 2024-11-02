@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "forge-std/console.sol";
 
 contract NFTMarketplace is ERC721URIStorage {
     uint256 private _tokenIds;
@@ -95,7 +96,7 @@ contract NFTMarketplace is ERC721URIStorage {
         _transfer(msg.sender, address(this), tokenId);
     }
 
-    function fetchItem() public view returns (Item[] memory) {
+    function fetchMarketItem() public view returns (Item[] memory) {
         uint256 itemCount = _tokenIds;
         uint256 unSoldItemCount = itemCount - _itemsSold;
         uint256 currentIndex;
@@ -103,17 +104,17 @@ contract NFTMarketplace is ERC721URIStorage {
         Item[] memory items = new Item[](unSoldItemCount);
 
         for (uint256 i = 0; i < itemCount; i++) {
-            if (idItem[i + 1].owner == address(this)) {
+            if (idItem[i].owner == address(this)) {
                 uint256 currentId = i + 1;
                 Item storage currentItem = idItem[currentId];
-                items[currentId] = currentItem;
-                currentIndex += 1;
+                items[currentIndex] = currentItem;
+                currentIndex++;
             }
         }
         return items;
     }
 
-    function fetchMyNtf() public view returns (Item[] memory) {
+    function fetchMyNFT() public view returns (Item[] memory) {
         uint256 totalCount = _tokenIds;
         uint256 itemCount;
         uint256 currentIndex;
@@ -129,32 +130,37 @@ contract NFTMarketplace is ERC721URIStorage {
             if (idItem[i + 1].owner == msg.sender) {
                 uint256 currentId = i + 1;
                 Item storage currentItem = idItem[currentId];
-                items[currentId] = currentItem;
-                currentIndex += 1;
+                items[currentIndex] = currentItem;
+                currentIndex++;
             }
         }
 
         return items;
     }
 
-    function fetchItems() public view returns (Item[] memory) {
+    function fetchItemsListed() public view returns (Item[] memory) {
         uint256 totalCount = _tokenIds;
         uint256 itemCount;
         uint256 currentIndex;
 
+        console.log("totalCount", totalCount);
+
         for (uint256 i = 0; i < totalCount; i++) {
-            if (idItem[i + 1].owner == msg.sender) {
-                itemCount += 1;
+            if (idItem[i + 1].seller == msg.sender) {
+                itemCount++;
             }
         }
 
+        console.log("itemCount", itemCount);
+
         Item[] memory items = new Item[](itemCount);
+
         for (uint256 i = 0; i < totalCount; i++) {
             if (idItem[i + 1].seller == msg.sender) {
                 uint256 currentId = i + 1;
                 Item storage currentItem = idItem[currentId];
-                items[currentId] = currentItem;
-                currentIndex += 1;
+                items[currentIndex] = currentItem;
+                currentIndex++;
             }
         }
 
